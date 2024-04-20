@@ -1,6 +1,7 @@
 global using Xunit;
 global using Xunit.Abstractions;
 using FluentAssertions;
+using System.Runtime.CompilerServices;
 
 namespace AsyncQueue.Tests;
 
@@ -149,5 +150,31 @@ public class AsyncQueueTests(ITestOutputHelper output)
         var actual = await q.DequeueAsync(cancellationToken);
 
         actual.Should().Be(expected);
+    }
+
+    [Fact]
+    public void CanCreateWithSize()
+    {
+        var _ = new AsyncQueue<int>(42);
+    }
+
+    // TODO what _are_ the semantics of iterating a Queue?
+    [Fact]
+    public async Task Foo()
+    {
+        var queue = new AsyncQueue<int>([1,2,3]);
+
+        var stopWhenQueueIsEmpty = new CancellationTokenSource();
+
+        await foreach (var item in queue.WithCancellation(stopWhenQueueIsEmpty.Token))
+        {
+            output.WriteLine("Got {0}", item);
+            if (queue.Count == 0)
+            {
+                stopWhenQueueIsEmpty.Cancel();
+            }
+        }
+
+        queue.Should().BeEmpty();
     }
 }
